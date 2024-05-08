@@ -1,8 +1,8 @@
 package com.pluralsight;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -54,7 +54,7 @@ public class Store {
         try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
             String line;
             while ((line = br.readLine()) != null) {
-                String[] parts = line.split(",");
+                String[] parts = line.split("\\|");
                 if (parts.length == 3) {
                     String id = parts[0];
                     String name = parts[1];
@@ -64,20 +64,11 @@ public class Store {
                     System.err.println("Invalid line in CSV: " + line);
                 }
             }
+
         } catch (IOException e) {
             System.err.println("Error reading CSV file: " + e.getMessage());
         }
     }
-
-// This method should read a CSV file with product information and
-        // populate the inventory ArrayList with Product objects. Each line
-        // of the CSV file contains product information in the following format:
-        //
-        // id,name,price
-        //
-        // where id is a unique string identifier, name is the product name,
-        // price is a double value representing the price of the product
-
 
     public static void displayProducts(ArrayList<Product> inventory, ArrayList<Product> cart, Scanner scanner) {
         System.out.println("Available Products:");
@@ -88,7 +79,7 @@ public class Store {
         System.out.println("Enter the ID of the product you want to add to cart (or type 'done' to exit):");
         String productId = scanner.nextLine();
         if (!productId.equals("done")) {
-            Product selectedProduct = findProductById(inventory, productId);
+            Product selectedProduct = findProductById(productId, inventory);
             if (selectedProduct != null) {
                 cart.add(selectedProduct);
                 System.out.println(selectedProduct.getName() + " added to cart.");
@@ -97,11 +88,6 @@ public class Store {
             }
         }
 
-        // This method should display a list of products from the inventory,
-        // and prompt the user to add items to their cart. The method should
-        // prompt the user to enter the ID of the product they want to add to
-        // their cart. The method should
-        // add the selected product to the cart ArrayList.
     }
 
     public static void displayCart(ArrayList<Product> cart, Scanner scanner, double totalAmount) {
@@ -114,12 +100,6 @@ public class Store {
         System.out.println("Total amount: $" + totalAmount);
     }
 
-
-    // This method should display the items in the cart ArrayList, along
-        // with the total cost of all items in the cart. The method should
-        // prompt the user to remove items from their cart by entering the ID
-        // of the product they want to remove. The method should update the cart ArrayList and totalAmount
-        // variable accordingly.
 
 
     public static void checkOut(ArrayList<Product> cart, double totalAmount) {
@@ -151,17 +131,33 @@ public class Store {
             System.out.println("Purchase canceled.");
         }
     }
-        // This method should calculate the total cost of all items in the cart,
-        // and display a summary of the purchase to the user. The method should
-        // prompt the user to confirm the purchase, and deduct the total cost
-        // from their account if they confirm.
 
 
+
+    private static void writePurchaseDetailsToFile(ArrayList<Product> cart, double totalAmount) {
+        String fileName = "purchase_history.txt";
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, true))) {
+            // Get current date and time
+            LocalDateTime now = LocalDateTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String dateTime = now.format(formatter);
+
+            // Write purchase details to the file
+            writer.write("Purchase Date: " + dateTime + "\n");
+            writer.write("Total Amount: $" + totalAmount + "\n");
+            writer.write("Items Purchased:\n");
+            for (Product product : cart) {
+                writer.write(product.getId() + ": " + product.getName() + " - $" + product.getPrice() + "\n");
+            }
+            writer.write("--------------------------------------------------\n");
+
+            System.out.println("Purchase details recorded in " + fileName);
+        } catch (IOException e) {
+            System.err.println("Error writing purchase details to file: " + e.getMessage());
+        }
+    }
     public static Product findProductById(String id, ArrayList<Product> inventory) {
-        // This method should search the inventory ArrayList for a product with
-        // the specified ID, and return the corresponding Product object. If
-        // no product with the specified ID is found, the method should return
-        // null.
+
 
         for (Product product : inventory) {
             if (product.getId().equals(id)) {
